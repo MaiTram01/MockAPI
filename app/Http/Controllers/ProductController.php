@@ -13,12 +13,17 @@ class ProductController extends Controller
     // Lấy danh sách sản phẩm
     public function index()
     {
-        $response = Http::get($this->apiUrl);
-        $data = $response->json();
-        $products = $data['data'];
-
-        return view('products.index', compact('products'));
+        $products = Http::get($this->apiUrl)->json()['data'];
+        $perPage = 10;
+        $currentPage = request()->get('page', 1);
+        $total = count($products);
+        $lastPage = ceil($total / $perPage);
+        $products = array_slice($products, ($currentPage - 1) * $perPage, $perPage);
+        $pageRange = range(1, $lastPage);
+        return view('products.index', compact('products', 'currentPage', 'lastPage', 'pageRange', 'total', 'perPage'));
     }
+
+
 
     // Hiển thị form tạo sản phẩm
     public function create()
@@ -32,22 +37,25 @@ class ProductController extends Controller
         $data = $request->validated();
         $formattedData = [
             "name" => $data['name'],
-            "description" => $data['description'] ?? "",
-            "unitPrice" => $data['unitPrice'],
-            "promotionPrice" => $data['promotionPrice'] ?? null,
+            "description" => $data['description'] ?? null,
+            "unitPrice" => (float) $data['unitPrice'],
+            "promotionPrice" => (float) ($data['promotionPrice'] ?? 0),
             "image" => $data['image'] ?? "",
             "unit" => $data['unit'] ?? "cái",
-            "new" => $data['new'] ?? 0
+            "new" => (bool) $data['new'] ?? 0
         ];
 
-        $response = Http::post($this->apiUrl, $formattedData);
+        $response = $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            // Chỉ định rằng body dữ liệu gửi đi là JSON
+        ])->post($this->apiUrl, $formattedData);
 
-        if ($response->successful()) {
+        if ($response->status() == 201) {
             return redirect()->route('products.index')->with('success', 'Sản phẩm đã được tạo!');
         }
+        dd($response->status());
         return back()->withErrors(['message' => 'Lỗi khi tạo sản phẩm!']);
     }
-
 
     // Hiển thị form chỉnh sửa sản phẩm
     public function edit($id)
@@ -68,17 +76,21 @@ class ProductController extends Controller
         $formattedData = [
             "name" => $data['name'],
             "description" => $data['description'] ?? "",
-            "unitPrice" => $data['unitPrice'],
-            "promotionPrice" => $data['promotionPrice'] ?? null, 
-            "image" => $data['image'] ?? "", 
+            "unitPrice" => (float) $data['unitPrice'],
+            "promotionPrice" => (float) ($data['promotionPrice'] ?? 0),
+            "image" => $data['image'] ?? "",
             "unit" => $data['unit'] ?? "cái",
-            "new" => $data['new'] ?? 0
+            "new" => (bool) $data['new'] ?? 0
         ];
 
-        $response = Http::put("{$this->apiUrl}/$id", $formattedData);
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->put("{$this->apiUrl}/$id", $formattedData);
 
-        if ($response->successful()) {
+        if ($response->status() == 200) {
             return redirect()->route('products.index')->with('success', 'Sản phẩm đã được cập nhật!');
+            // dd($response->status(), $response->body(), $formattedData);
+
         }
         return back()->withErrors(['message' => 'Lỗi khi cập nhật sản phẩm!']);
     }

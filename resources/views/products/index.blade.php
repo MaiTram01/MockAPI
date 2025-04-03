@@ -11,15 +11,15 @@
 <body>
     <div class="container mt-5">
         <h2>Danh sách sản phẩm</h2>
-        
+
         <!-- Thêm sản phẩm -->
         <a href="{{ route('products.create') }}" class="btn btn-success mb-3">Thêm sản phẩm</a>
 
         <!-- Thông báo thành công -->
         @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
         @endif
 
         <!-- Bảng danh sách sản phẩm -->
@@ -45,7 +45,7 @@
                     <td>{{ $product['description'] }}</td>
                     <td>{{ number_format($product['unitPrice'], 0, ',', '.') }}đ</td>
                     <td>{{ $product['promotionPrice'] ? number_format($product['promotionPrice'], 0, ',', '.') . 'đ' : 'Không' }}</td>
-                    <td><img src="{{ $product['image'] }}" alt="" style="width:60px; height: 50px"></td>
+                    <td><img src="{{ asset('source/image/product/' . $product['image']) }}" alt="Product Image" width="100"></td>
                     <td>{{ $product['unit'] }}</td>
                     <td>{{ $product['new'] ? 'Có' : 'Không' }}</td>
                     <td>
@@ -63,6 +63,19 @@
                 @endforeach
             </tbody>
         </table>
+        <div class="d-flex justify-content-between mt-3">
+            @if ($currentPage > 1)
+            <a href="{{ route('products.index', ['page' => $currentPage - 1]) }}" class="btn btn-secondary">Trang trước</a>
+            @endif
+            <div>
+                @foreach($pageRange as $page)
+                <a href="{{ route('products.index', ['page' => $page]) }}" class="btn btn-info btn-sm {{ $page == $currentPage ? 'active' : '' }}">{{ $page }}</a>
+                @endforeach
+            </div>
+            @if ($currentPage < $lastPage)
+                <a href="{{ route('products.index', ['page' => $currentPage + 1]) }}" class="btn btn-secondary">Trang sau</a>
+                @endif
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
